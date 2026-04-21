@@ -4,7 +4,11 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Zap } from 'lucide-react';
 
-export default function TriggerNode({ data }: any) {
+interface NodeData {
+  label: string;
+}
+
+export default function TriggerNode({ data }: { data: NodeData }) {
   return (
     <div className="px-4 py-3 shadow-xl rounded-xl bg-slate-900 border-2 border-orange-500/50 min-w-[200px]">
       <div className="flex items-center gap-3">

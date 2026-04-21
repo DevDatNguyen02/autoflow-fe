@@ -11,8 +11,6 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,14 +30,19 @@ interface DashboardStats {
   }>;
 }
 
+import { Skeleton } from "@/components/ui/Skeleton";
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     async function fetchStats() {
       try {
-        const res = await fetch("http://localhost:3001/dashboard/overview");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const res = await fetch(`${apiUrl}/dashboard/overview`);
         const data = await res.json();
         setStats(data);
       } catch (error) {
@@ -51,10 +54,24 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
+  if (!isMounted) return null;
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0f172a] text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-[#0f172a] p-8">
+        <div className="flex justify-between mb-10">
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+        </div>
+        <Skeleton className="h-[400px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -95,7 +112,7 @@ export default function DashboardPage() {
             <LayoutDashboard className="w-8 h-8 text-blue-500" />
             Dashboard Overview
           </h1>
-          <p className="text-slate-400 mt-2">Welcome back to AutoFlow. Here's what's happening today.</p>
+          <p className="text-slate-400 mt-2">Welcome back to AutoFlow. Here&apos;s what&apos;s happening today.</p>
         </div>
         <div className="flex items-center gap-4 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50 backdrop-blur-sm">
           <Calendar className="w-5 h-5 text-slate-400" />
@@ -151,9 +168,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="h-[400px] w-full">
+        <div className="h-[400px] w-full min-h-[400px] relative">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={stats?.timeSeries || []}>
+            <AreaChart data={Array.isArray(stats?.timeSeries) ? stats.timeSeries : []}>
               <defs>
                 <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -167,6 +184,7 @@ export default function DashboardPage() {
                 fontSize={12}
                 tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'short' })}
               />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <YAxis stroke="#64748b" fontSize={12} />
               <Tooltip 
                 contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}

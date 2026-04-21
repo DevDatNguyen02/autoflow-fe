@@ -4,7 +4,11 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { GitBranch } from 'lucide-react';
 
-export default function ConditionNode({ data }: any) {
+interface NodeData {
+  label: string;
+}
+
+export default function ConditionNode({ data }: { data: NodeData }) {
   return (
     <div className="px-4 py-3 shadow-xl rounded-xl bg-slate-900 border-2 border-purple-500/50 min-w-[220px]">
       <Handle 

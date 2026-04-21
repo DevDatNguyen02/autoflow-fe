@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import { db } from '@/db';
-import GitHub from 'next-auth/providers/github';
+
 import Credentials from 'next-auth/providers/credentials';
 import * as bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
@@ -10,7 +10,7 @@ import { users } from '@/db/schema';
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [
-    GitHub,
+
     Credentials({
       // Credentials provider for easy development
       name: 'Development Login',
@@ -58,14 +58,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
-        // @ts-ignore
+        // @ts-expect-error: Role is not part of standard JWT type but exists in our schema
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token) {
-        // @ts-ignore
+        // @ts-expect-error: Role is not part of standard Session type but exists in our schema
         session.user.role = token.role;
       }
       return session;
