@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { 
-  Layers, 
-  Plus, 
-  Trash2, 
-  Search, 
-  Filter, 
+import {
+  Layers,
+  Plus,
+  Trash2,
+  Search,
+  Filter,
   ChevronRight,
   Target,
   BarChart3,
@@ -24,6 +24,52 @@ export default function SegmentsPage() {
   ]);
   const [segmentName, setSegmentName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [refreshingSegments, setRefreshingSegments] = useState<Record<string, boolean>>({});
+
+  const handleRefresh = async (segmentId: string) => {
+    setRefreshingSegments(prev => ({ ...prev, [segmentId]: true }));
+    try {
+      // Logic for refresh (Mocking success for now as per DECISION-006)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Re-fetch to show updated data
+      const res = await fetch('/api/v1/segments');
+      const json = await res.json();
+      setSegments(json.data || []);
+    } finally {
+      setRefreshingSegments(prev => ({ ...prev, [segmentId]: false }));
+    }
+  };
+
+  // Live Preview Logic
+  useEffect(() => {
+    const validCriteria = criteria.filter(c => c.event_name !== "");
+    if (validCriteria.length === 0) {
+      setPreviewCount(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsPreviewing(true);
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const res = await fetch(`${apiUrl}/api/v1/segments/preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conditions: validCriteria, match_type: 'AND' })
+        });
+        const data = await res.json();
+        setPreviewCount(data.count || 0);
+      } catch (err) {
+        console.error("Preview failed:", err);
+      } finally {
+        setIsPreviewing(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [criteria]);
 
   useEffect(() => {
     fetch('/api/v1/segments')
@@ -58,7 +104,7 @@ export default function SegmentsPage() {
 
   const handleSaveSegment = async () => {
     if (!segmentName.trim()) return alert("Please enter a segment name");
-    
+
     setIsSaving(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -95,12 +141,12 @@ export default function SegmentsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-             <Layers className="w-8 h-8 text-blue-500" />
-             Customer Segments
+            <Layers className="w-8 h-8 text-blue-500" />
+            Customer Segments
           </h1>
           <p className="text-slate-500 mt-1">Group your customers based on behavioral and profile criteria.</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-semibold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
         >
@@ -133,16 +179,16 @@ export default function SegmentsPage() {
         <div className="p-6 border-b border-slate-800 flex items-center justify-between gap-4 bg-slate-900/30">
           <div className="flex-1 max-w-md relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input 
-              type="text" 
-              placeholder="Search segments..." 
+            <input
+              type="text"
+              placeholder="Search segments..."
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
-             <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
-               <Filter className="w-5 h-5" />
-             </button>
+            <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+              <Filter className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -162,22 +208,22 @@ export default function SegmentsPage() {
                 <tr key={s.id} className="group hover:bg-white/5 transition-colors">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold group-hover:scale-110 transition-transform">
-                         {s.name[0].toUpperCase()}
-                       </div>
-                       <div>
-                         <p className="text-sm font-bold text-white leading-none mb-1">{s.name}</p>
-                         <p className="text-xs text-slate-500 line-clamp-1">{s.description || "No description provided."}</p>
-                       </div>
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold group-hover:scale-110 transition-transform">
+                        {s.name[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white leading-none mb-1">{s.name}</p>
+                        <p className="text-xs text-slate-500 line-clamp-1">{s.description || "No description provided."}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex flex-wrap gap-2">
-                       {/* Mock criteria display */}
-                       <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded-md text-[10px] text-slate-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-blue-500" />
-                          View Pricing ≥ 1
-                       </span>
+                      {/* Mock criteria display */}
+                      <span className="px-2 py-1 bg-slate-800 border border-slate-700 rounded-md text-[10px] text-slate-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-blue-500" />
+                        View Pricing ≥ 1
+                      </span>
                     </div>
                   </td>
                   <td className="px-8 py-6 text-xs text-slate-500 tabular-nums">
@@ -189,9 +235,22 @@ export default function SegmentsPage() {
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <button className="p-2 hover:bg-blue-500/10 hover:text-blue-400 text-slate-500 rounded-lg transition-all active:scale-90">
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => handleRefresh(s.id)}
+                        disabled={refreshingSegments[s.id]}
+                        className={cn(
+                          "p-2 hover:bg-slate-800 rounded-lg text-slate-500 transition-all",
+                          refreshingSegments[s.id] && "text-blue-500 animate-spin"
+                        )}
+                        title="Manual Refresh"
+                      >
+                        <Plus className={cn("w-4 h-4 rotate-45 transition-transform", refreshingSegments[s.id] && "rotate-0")} />
+                      </button>
+                      <button className="p-2 hover:bg-blue-500/10 hover:text-blue-400 text-slate-500 rounded-lg transition-all active:scale-90">
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -203,7 +262,7 @@ export default function SegmentsPage() {
                       <Filter className="w-10 h-10 text-slate-600" />
                     </div>
                     <p className="text-slate-500">No segments created yet.</p>
-                    <button 
+                    <button
                       onClick={() => setShowModal(true)}
                       className="text-blue-500 hover:underline text-sm font-semibold"
                     >
@@ -222,95 +281,106 @@ export default function SegmentsPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-2xl w-full relative z-10 shadow-2xl animate-in zoom-in-95 duration-200 maxHeight-[90vh] overflow-y-auto">
-             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-               <Layers className="w-6 h-6 text-blue-500" />
-               Create New Segment
-             </h2>
-             <div className="space-y-6">
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Segment Name</label>
-                  <input 
-                    type="text" 
-                    value={segmentName}
-                    onChange={(e) => setSegmentName(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" 
-                    placeholder="e.g. VIP Customers" 
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Conditions (AND)</label>
-                    <button 
-                      onClick={addCriteria}
-                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase tracking-tighter"
-                    >
-                      <Plus className="w-3 h-3" /> Add Rule
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {criteria.map((c, i) => (
-                      <div key={i} className="flex items-center gap-3 animate-in slide-in-from-left-2 duration-200">
-                        <div className="flex-1 grid grid-cols-2 gap-3">
-                          <select 
-                            value={c.event_name}
-                            onChange={(e) => updateCriteria(i, 'event_name', e.target.value)}
-                            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
-                          >
-                            <option value="">Select event...</option>
-                            {eventNames.map(name => (
-                              <option key={name} value={name}>{name}</option>
-                            ))}
-                          </select>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500">Min:</span>
-                            <input 
-                              type="number"
-                              min="1"
-                              value={c.min_occurrences}
-                              onChange={(e) => updateCriteria(i, 'min_occurrences', parseInt(e.target.value) || 1)}
-                              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => removeCriteria(i)}
-                          className={cn(
-                            "p-2 text-slate-500 hover:text-red-400 transition-colors",
-                            criteria.length === 1 && "opacity-0 pointer-events-none"
-                          )}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Layers className="w-6 h-6 text-blue-500" />
+              Create New Segment
+            </h2>
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Segment Name</label>
+                <input
+                  type="text"
+                  value={segmentName}
+                  onChange={(e) => setSegmentName(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="e.g. VIP Customers"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Conditions (AND)</label>
+                  <button
+                    onClick={addCriteria}
+                    className="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase tracking-tighter"
+                  >
+                    <Plus className="w-3 h-3" /> Add Rule
+                  </button>
                 </div>
 
-                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-slate-400 text-xs">
-                      <Target className="w-4 h-4 text-blue-500" />
-                      <span>Live reach prediction</span>
-                   </div>
-                   <div className="text-sm font-bold text-white">... people</div>
+                <div className="space-y-3">
+                  {criteria.map((c, i) => (
+                    <div key={i} className="flex items-center gap-3 animate-in slide-in-from-left-2 duration-200">
+                      <div className="flex-1 grid grid-cols-2 gap-3">
+                        <select
+                          value={c.event_name}
+                          onChange={(e) => updateCriteria(i, 'event_name', e.target.value)}
+                          className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
+                        >
+                          <option value="">Select event...</option>
+                          {eventNames.map(name => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500">Min:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={c.min_occurrences}
+                            onChange={(e) => updateCriteria(i, 'min_occurrences', parseInt(e.target.value) || 1)}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeCriteria(i)}
+                        className={cn(
+                          "p-2 text-slate-500 hover:text-red-400 transition-colors",
+                          criteria.length === 1 && "opacity-0 pointer-events-none"
+                        )}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-             </div>
-             <div className="mt-10 flex justify-end gap-3 pt-6 border-t border-slate-800">
-               <button 
-                 onClick={() => setShowModal(false)} 
-                 className="px-6 py-2.5 text-slate-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-               <button 
-                 onClick={handleSaveSegment}
-                 disabled={isSaving}
-                 className="px-8 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2"
-                >
-                  {isSaving ? "Saving..." : "Create Segment"}
-                </button>
-             </div>
+              </div>
+
+              <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-400 text-xs">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <span>Live reach prediction</span>
+                </div>
+                <div className="text-sm font-bold text-white">
+                  {isPreviewing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                      Calculating...
+                    </span>
+                  ) : previewCount !== null ? (
+                    `${previewCount} customers`
+                  ) : (
+                    "---"
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="mt-10 flex justify-end gap-3 pt-6 border-t border-slate-800">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-6 py-2.5 text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSegment}
+                disabled={isSaving}
+                className="px-8 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2"
+              >
+                {isSaving ? "Saving..." : "Create Segment"}
+              </button>
+            </div>
           </div>
         </div>
       )}
