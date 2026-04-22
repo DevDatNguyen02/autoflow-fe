@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Users, MousePointer2, UserPlus, Fingerprint } from "lucide-react";
+import { Users, MousePointer2, UserPlus, Fingerprint, Search } from "lucide-react";
+import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 interface Profile {

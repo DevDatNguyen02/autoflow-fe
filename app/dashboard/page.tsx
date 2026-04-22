@@ -39,6 +39,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     async function fetchStats() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";

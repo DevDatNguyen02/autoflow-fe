@@ -14,12 +14,28 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface Criteria {
+  event_name: string;
+  min_occurrences: number;
+}
+
+interface Segment {
+  id: string;
+  name: string;
+  description?: string;
+  criteria: {
+    conditions: Criteria[];
+    conjunction: 'AND' | 'OR';
+  };
+  createdAt: string;
+}
+
 export default function SegmentsPage() {
-  const [segments, setSegments] = useState<any[]>([]);
+  const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [eventNames, setEventNames] = useState<string[]>([]);
-  const [criteria, setCriteria] = useState<{ event_name: string; min_occurrences: number }[]>([
+  const [criteria, setCriteria] = useState<Criteria[]>([
     { event_name: "", min_occurrences: 1 }
   ]);
   const [segmentName, setSegmentName] = useState("");
@@ -57,7 +73,7 @@ export default function SegmentsPage() {
         const res = await fetch(`${apiUrl}/api/v1/segments/preview`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conditions: validCriteria, match_type: 'AND' })
+          body: JSON.stringify({ conditions: validCriteria, conjunction: 'AND' })
         });
         const data = await res.json();
         setPreviewCount(data.count || 0);
@@ -90,7 +106,7 @@ export default function SegmentsPage() {
     setCriteria([...criteria, { event_name: "", min_occurrences: 1 }]);
   };
 
-  const updateCriteria = (index: number, field: string, value: any) => {
+  const updateCriteria = (index: number, field: string, value: string | number) => {
     const newCriteria = [...criteria];
     newCriteria[index] = { ...newCriteria[index], [field]: value };
     setCriteria(newCriteria);
@@ -114,8 +130,10 @@ export default function SegmentsPage() {
         body: JSON.stringify({
           name: segmentName,
           description: `Segment based on ${criteria.length} criteria`,
-          conditions: criteria,
-          match_type: 'AND'
+          criteria: {
+            conditions: criteria,
+            conjunction: 'AND'
+          }
         })
       });
 

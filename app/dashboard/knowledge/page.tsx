@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { BrainCircuit, BookOpen, MessageSquare, Database, Plus, FileText, AlertCircle, ThumbsUp, ThumbsDown } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { BrainCircuit, BookOpen, MessageSquare, Database, Plus, FileText, AlertCircle, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 interface KnowledgeDocument {
@@ -31,35 +31,87 @@ export default function KnowledgePage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [stats, setStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        // Fetch Documents
-        const docsRes = await fetch(`${apiUrl}/api/knowledge/documents`);
-        const docsData = await docsRes.json();
-        setDocuments(docsData.data || []);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch Documents
+      const docsRes = await fetch(`${apiUrl}/api/knowledge/documents`);
+      const docsData = await docsRes.json();
+      setDocuments(docsData.data || []);
 
-        // Fetch Sessions
-        const sessionsRes = await fetch(`${apiUrl}/api/knowledge/history/sessions`, { method: 'POST' });
-        const sessionsData = await sessionsRes.json();
-        setSessions(sessionsData || []);
+      // Fetch Sessions
+      const sessionsRes = await fetch(`${apiUrl}/api/knowledge/history/sessions`, { method: 'POST' });
+      const sessionsData = await sessionsRes.json();
+      setSessions(sessionsData || []);
 
-        // Fetch Stats
-        const statsRes = await fetch(`${apiUrl}/api/knowledge/stats/feedback`, { method: 'POST' });
-        const statsData = await statsRes.json();
-        setStats(statsData);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } finally {
-        setLoading(false);
-      }
+      // Fetch Stats
+      const statsRes = await fetch(`${apiUrl}/api/knowledge/stats/feedback`, { method: 'POST' });
+      const statsData = await statsRes.json();
+      setStats(statsData);
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [apiUrl]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Kiểm tra định dạng
+    const allowedTypes = ['.pdf', '.txt', '.docx'];
+    const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowedTypes.includes(extension)) {
+      alert("Chỉ chấp nhận file PDF, TXT hoặc DOCX");
+      return;
+    }
+
+    // Kiểm tra dung lượng (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File quá lớn (tối đa 10MB)");
+      return;
+    }
+
+    await uploadFile(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadFile = async (file: File) => {
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${apiUrl}/api/knowledge/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        alert("Tải lên thành công!");
+        await fetchData(); // Làm mới danh sách
+      } else {
+        const err = await res.json();
+        alert(`Lỗi: ${err.message || "Không thể tải lên"}`);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Lỗi kết nối khi tải lên tài liệu");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -82,10 +134,27 @@ export default function KnowledgePage() {
           </h1>
           <p className="text-slate-400 mt-2">Manage your AI&apos;s data sources and chatbot configuration.</p>
         </div>
-        <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-900/20 font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-          <Plus className="w-5 h-5" />
-          Add Data Source
-        </button>
+        <div className="flex items-center gap-3">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept=".pdf,.txt,.docx"
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-900/20 font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isUploading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5" />
+            )}
+            {isUploading ? "Uploading..." : "Add Data Source"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
