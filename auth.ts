@@ -58,15 +58,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
-        // @ts-expect-error: Role is not part of standard JWT type but exists in our schema
+        // @ts-expect-error: Role exists in our schema
         token.role = user.role;
+        // @ts-expect-error: id exists in our schema
+        token.id = user.id;
+
+        // Ký một token riêng cho Backend (NestJS) verify
+        // Sử dụng AUTH_SECRET chung giữa FE và BE
+        const jwt = await import('jsonwebtoken');
+        token.accessToken = jwt.sign(
+          {
+            sub: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+          process.env.AUTH_SECRET || 'fallback_secret',
+          { expiresIn: '30d' }
+        );
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token) {
-        // @ts-expect-error: Role is not part of standard Session type but exists in our schema
+        // @ts-expect-error: Role is custom
         session.user.role = token.role;
+        // @ts-expect-error: id is custom
+        session.user.id = token.id;
+        // @ts-expect-error: accessToken is custom
+        session.accessToken = token.accessToken;
       }
       return session;
     },
