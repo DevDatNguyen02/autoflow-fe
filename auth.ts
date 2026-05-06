@@ -60,7 +60,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         // @ts-expect-error: Role exists in our schema
         token.role = user.role;
-        // @ts-expect-error: id exists in our schema
         token.id = user.id;
 
         // Ký một token riêng cho Backend (NestJS) verify
@@ -71,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             sub: user.id,
             email: user.email,
             name: user.name,
+            // @ts-expect-error: Role is custom
             role: user.role,
           },
           process.env.AUTH_SECRET || 'fallback_secret',

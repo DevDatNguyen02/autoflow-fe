@@ -29,7 +29,7 @@ export default function UsersManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", role: "agent" as UserRole });
   const [saving, setSaving] = useState(false);
-  const [newUserResult, setNewUserResult] = useState<{ tempPassword: string; email: string } | null>(null);
+  const [newUserEmail, setNewUserEmail] = useState<string | null>(null);
 
   // @ts-expect-error: accessToken is custom
   const token = session?.accessToken || "";
@@ -65,7 +65,7 @@ export default function UsersManagementPage() {
         throw new Error(err.message);
       }
       const data = await res.json();
-      setNewUserResult({ tempPassword: data.data.tempPassword, email: data.data.email });
+      setNewUserEmail(data.data.email);
       setShowModal(false);
       setForm({ name: "", email: "", role: "agent" });
       fetchUsers();
@@ -125,16 +125,19 @@ export default function UsersManagementPage() {
           </button>
         </div>
 
-        {/* Temp password result */}
-        {newUserResult && (
-          <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-start justify-between gap-4">
-            <div>
-              <p className="font-semibold text-amber-400">Tài khoản mới đã tạo!</p>
-              <p className="text-sm text-slate-400 mt-1">Email: <span className="text-white">{newUserResult.email}</span></p>
-              <p className="text-sm text-slate-400">Mật khẩu tạm: <code className="text-amber-300 font-mono bg-slate-800 px-2 py-0.5 rounded">{newUserResult.tempPassword}</code></p>
-              <p className="text-xs text-slate-500 mt-1">Gửi thông tin này cho nhân viên qua kênh bảo mật.</p>
+        {/* Success message */}
+        {newUserEmail && (
+          <div className="mb-6 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-start justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-emerald-400">Tài khoản mới đã tạo thành công!</p>
+                <p className="text-sm text-slate-400">Mật khẩu khởi tạo đã được gửi đến: <span className="text-white font-medium">{newUserEmail}</span></p>
+              </div>
             </div>
-            <button onClick={() => setNewUserResult(null)}><X className="w-4 h-4 text-slate-500 hover:text-white" /></button>
+            <button onClick={() => setNewUserEmail(null)}><X className="w-4 h-4 text-slate-500 hover:text-white" /></button>
           </div>
         )}
 

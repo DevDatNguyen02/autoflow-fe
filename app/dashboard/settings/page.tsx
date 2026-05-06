@@ -81,23 +81,23 @@ export default function SettingsPage() {
           )}
 
           {/* Security Overview */}
-          <div className="flex items-start gap-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/50">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+          <Link
+            href="/dashboard/profile"
+            className="group flex items-start gap-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/50 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all"
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-colors">
               <Shield className="w-6 h-6 text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-white">Vai trò của bạn</h3>
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                Hồ sơ cá nhân
+                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+              </h3>
               <p className="text-sm text-slate-400 mt-1">
-                Vai trò hiện tại:{" "}
-                <span className="capitalize font-semibold text-white">{role}</span>
-              </p>
-              <p className="text-xs text-slate-500 mt-2">
-                {role === "admin" && "Bạn có toàn quyền quản trị hệ thống."}
-                {role === "marketer" && "Bạn có thể quản lý khách hàng, chiến dịch và AI Hub."}
-                {role === "agent" && "Bạn có thể xem hồ sơ khách hàng và hỗ trợ chat."}
+                Chỉnh sửa thông tin cá nhân và thay đổi mật khẩu
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </div>

@@ -143,17 +143,26 @@ export default function DashboardLayout({
 
         {/* User / Logout */}
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-inner group-hover:scale-105 transition-transform">
-              {userInitials}
+          <Link href="/dashboard/profile">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer group mb-2">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-inner group-hover:scale-105 transition-transform overflow-hidden">
+                {user?.image ? (
+                  <img 
+                    src={user.image.startsWith('http') ? user.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${user.image}`} 
+                    alt={user.name || "User"} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : userInitials}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-semibold text-white truncate">{user?.name || "Guest"}</p>
+                <p className={cn("text-[10px] font-semibold capitalize", roleColors[role] || "text-slate-500")}>
+                  <KeyRound className="w-2.5 h-2.5 inline mr-1" />{role}
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400 transition-colors" />
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-semibold text-white truncate">{user?.name || "Guest"}</p>
-              <p className={cn("text-[10px] font-semibold capitalize", roleColors[role] || "text-slate-500")}>
-                <KeyRound className="w-2.5 h-2.5 inline mr-1" />{role}
-              </p>
-            </div>
-          </div>
+          </Link>
           <button 
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-colors"

@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
+  ReactFlowProvider,
   MiniMap,
   Controls,
   Background,
@@ -115,6 +116,9 @@ export default function FlowCanvas() {
   };
 
   const onRunTest = async () => {
+    // Reset trace immediately to clear UI
+    setExecutionTrace([]);
+    
     try {
       let payload = {};
       try {
@@ -204,29 +208,31 @@ export default function FlowCanvas() {
       <div className="flex-1 flex w-full bg-slate-950 relative overflow-hidden">
         {/* ReactFlow Canvas */}
         <div className="flex-1 relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            fitView
-            colorMode="dark"
-          >
-            <Background variant={BackgroundVariant.Dots} gap={20} color="#1e293b" />
-            <Controls className="bg-slate-900 border-slate-800 fill-white" />
-            <MiniMap 
-              className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden outline-none" 
-              nodeColor={(node) => {
-                if (node.type === 'trigger') return '#f97316';
-                if (node.type === 'action') return '#3b82f6';
-                if (node.type === 'condition') return '#a855f7';
-                return '#eee';
-              }}
-              maskColor="rgba(15, 23, 42, 0.7)"
-            />
-          </ReactFlow>
+          <ReactFlowProvider>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              fitView
+              colorMode="dark"
+            >
+              <Background variant={BackgroundVariant.Dots} gap={20} color="#1e293b" />
+              <Controls className="bg-slate-900 border-slate-800 fill-white" />
+              <MiniMap 
+                className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden outline-none" 
+                nodeColor={(node) => {
+                  if (node.type === 'trigger') return '#f97316';
+                  if (node.type === 'action') return '#3b82f6';
+                  if (node.type === 'condition') return '#a855f7';
+                  return '#eee';
+                }}
+                maskColor="rgba(15, 23, 42, 0.7)"
+              />
+            </ReactFlow>
+          </ReactFlowProvider>
         </div>
 
         {/* Test Panel (Side Sheet) */}
